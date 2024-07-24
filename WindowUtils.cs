@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -13,19 +14,26 @@ public static class WindowUtils
      */
     private static NotifyIcon? _notifyIcon;
 
-    public static void CreateTrayIcon(Window window, Icon? icon, string appName, string version)
+    public static void CreateTrayIcon(Window window, Icon? icon, string appName, string version, string? clickUrl)
     {
         if (_notifyIcon != null || icon == null) return;
+        var notifyIconText = clickUrl != null
+            ? $"{appName} {version}\nClick to open {clickUrl}"
+            : $"Click to show {appName} {version}";
         _notifyIcon = new NotifyIcon
         {
             Icon = icon,
-            Text = $"Click to show {appName} {version}"
+            Text = notifyIconText
         };
         _notifyIcon.MouseClick += (_, evt) =>
         {
-            if(evt.Button == MouseButtons.Left) Restore(window, true);
+            if (clickUrl != null && evt.Button == MouseButtons.Left)
+            {
+                MiscUtils.OpenUrl(clickUrl);
+            }
+            else if (evt.Button == MouseButtons.Left) Restore(window, true);
         };
-        
+
         _notifyIcon.ContextMenuStrip = new ContextMenuStrip(new System.ComponentModel.Container());
         _notifyIcon.ContextMenuStrip.SuspendLayout();
         var openMenuItem = new ToolStripMenuItem("Show");
@@ -36,7 +44,7 @@ public static class WindowUtils
         _notifyIcon.ContextMenuStrip.Items.Add(exitMenuItem);
         _notifyIcon.ContextMenuStrip.Name = "NotifyIconContextMenu";
         _notifyIcon.ContextMenuStrip.ResumeLayout(false);
-        
+
         _notifyIcon.Visible = true;
     }
 
